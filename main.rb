@@ -12,7 +12,7 @@ class MainWindow < Gosu::Window
     @window_width, @window_height = Gosu.available_width, Gosu.available_height
     @fonts = Hash.new
     super(@window_width, @window_height, true)
-    self.caption  = 'Dixie Spelling Bee 2015'
+    self.caption  = 'Dixie Spelling Bee Trainer 2015'
     starting_word = SpellingWord.new(answer: self.caption)
     @words, @current_word, @word_hidden = Array.new, starting_word, false
     @current_guess = ''
