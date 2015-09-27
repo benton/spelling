@@ -86,14 +86,23 @@ class MainWindow < Gosu::Window
       set_status("Reading file #{infile}...")
       File.open(infile, "r") do |f|
         f.each_line do |line|
-          # case 0 - the line is whitespace only - ignore it
+          # case 0 - the line is whitespace only - save the latest word
           if matches = line.match(/\A\s+\Z/)
+            if latest_word != nil
+              @words << latest_word
+              latest_word = nil
+            end
           # case 1 - this line is a single word
           elsif matches = line.match(/\A\s*(\S+)\s*\Z/)
-            @words << latest_word if latest_word != nil
-            latest_word = SpellingWord.new(
-              answer: matches[1].upcase, level: word_level
-            )
+            # if there's no latest_word, it's a new candidate -
+            # otherwise, it's a definition
+            if latest_word == nil
+              latest_word = SpellingWord.new(
+                answer: matches[1].upcase, level: word_level
+              )
+            else
+              latest_word.definition = line.strip
+            end
           # case 2 - the line begins with a quote character - this line is usage
           elsif matches = line.match(/\A["']/)
             latest_word.usage = line.strip
