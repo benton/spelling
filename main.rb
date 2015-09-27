@@ -40,10 +40,12 @@ class MainWindow < Gosu::Window
         end
       end
     elsif id == Gosu::Button::KbBackspace
-      @current_guess = ''
+      @current_guess = '' if @word_hidden
     elsif (id >= 4) && (id <= 29)
-      char = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[id - 4]
-      @current_guess += char
+      if @word_hidden
+        char = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[id - 4]
+        @current_guess += char
+      end
     end
   end
 
@@ -56,6 +58,8 @@ class MainWindow < Gosu::Window
     `say "Please spell?"`
     sleep(0.3)
     `say "#{@current_word.answer}"`
+    sleep(0.3)
+    Thread.new {`say "#{@current_word.definition}"`}
   end
 
   def draw
@@ -69,7 +73,8 @@ class MainWindow < Gosu::Window
       60, @window_height * 0.25, 
       (@current_word.answer == @current_guess ? GREEN : RED))
     # definition
-    center_text(@current_word.definition, 40, @window_height * 0.5)
+    center_text((@word_hidden ? '' : @current_word.definition), 
+      40, @window_height * 0.5)
     # usage
     center_text((@word_hidden ? '' : @current_word.usage), 
       40, @window_height * 0.75)
