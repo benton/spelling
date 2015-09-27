@@ -40,9 +40,7 @@ class MainWindow < Gosu::Window
         end
       end
     elsif id == Gosu::Button::KbBackspace
-      if @current_guess != ''
-        @current_guess = @current_guess[0..(@current_guess.size-2)]
-      end
+      @current_guess = ''
     elsif (id >= 4) && (id <= 29)
       char = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[id - 4]
       @current_guess += char
@@ -83,8 +81,8 @@ class MainWindow < Gosu::Window
     set_status("Loading words...")
     (1..2).each do |word_level|
       infile = File.join(File.dirname(__FILE__), 'data', "level#{word_level}.txt")
-      # loop through lines, maintaining a current_word as state
-      current_word = nil
+      # loop through lines, maintaining a latest_word as state
+      latest_word = nil
       set_status("Reading file #{infile}...")
       File.open(infile, "r") do |f|
         f.each_line do |line|
@@ -92,15 +90,15 @@ class MainWindow < Gosu::Window
           if matches = line.match(/\A\s+\Z/)
           # case 1 - this line is a single word
           elsif matches = line.match(/\A\s*(\S+)\s*\Z/)
-            @words << current_word if current_word != nil
-            current_word = SpellingWord.new(
+            @words << latest_word if latest_word != nil
+            latest_word = SpellingWord.new(
               answer: matches[1].upcase, level: word_level
             )
           # case 2 - the line begins with a quote character - this line is usage
           elsif matches = line.match(/\A["']/)
-            current_word.usage = line.strip
+            latest_word.usage = line.strip
           else # case 3 - the line has several unquoted words - the definition
-            current_word.definition = line.strip
+            latest_word.definition = line.strip
           end
         end
         @status = "#{@words.size} words loaded"
