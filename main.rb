@@ -9,7 +9,7 @@ class MainWindow < Gosu::Window
   RED, GREEN, WHITE = 0xff_ff0000, 0xff_00ff00, 0xff_ffffff
 
   def initialize
-    @window_width, @window_height = Gosu.available_width, Gosu.available_height
+    @window_width, @window_height = 1024, 768
     @fonts = Hash.new
     super(@window_width, @window_height, true)
     self.caption  = 'Dixie Spelling Bee Trainer 2015'
@@ -81,37 +81,8 @@ class MainWindow < Gosu::Window
     set_status("Loading words...")
     (1..2).each do |word_level|
       infile = File.join(File.dirname(__FILE__), 'data', "level#{word_level}.txt")
-      # loop through lines, maintaining a latest_word as state
-      latest_word = nil
       set_status("Reading file #{infile}...")
-      File.open(infile, "r") do |f|
-        f.each_line do |line|
-          # case 0 - the line is whitespace only - save the latest word
-          if matches = line.match(/\A\s+\Z/)
-            if latest_word != nil
-              @words << latest_word
-              latest_word = nil
-            end
-          # case 1 - this line is a single word
-          elsif matches = line.match(/\A\s*(\S+)\s*\Z/)
-            # if there's no latest_word, it's a new candidate -
-            # otherwise, it's a definition
-            if latest_word == nil
-              latest_word = SpellingWord.new(
-                answer: matches[1].upcase, level: word_level
-              )
-            else
-              latest_word.definition = line.strip
-            end
-          # case 2 - the line begins with a quote character - this line is usage
-          elsif matches = line.match(/\A["']/)
-            latest_word.usage = line.strip
-          else # case 3 - the line has several unquoted words - the definition
-            latest_word.definition = line.strip
-          end
-        end
-        @status = "#{@words.size} words loaded"
-      end
+      @words.concat(SpellingWord.load_words_from_file(infile, word_level))
     end
     @words_loaded = true
     @current_guess = @current_word.answer
