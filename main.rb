@@ -16,7 +16,7 @@ class MainWindow < Gosu::Window
   def initialize
     @window_width, @window_height = 1024, 768
     @fonts = Hash.new
-    super(@window_width, @window_height, false)
+    super(@window_width, @window_height, true)
     self.caption  = 'Dixie Spelling Bee Trainer 2015'
     starting_word = SpellingWord.new(answer: self.caption)
     @words, @current_word, @word_hidden = Array.new, starting_word, false
