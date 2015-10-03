@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 # Runs a GUI application for testing spelling words
 require 'fileutils'
-require 'yaml'
 require 'gosu'
 require File.join(File.dirname(__FILE__), 'spelling_word')
 
@@ -101,7 +100,7 @@ class MainWindow < Gosu::Window
 
   # spawns a thread that fills @words, then sets @words_loaded
   def load_words
-    @mistakes = YAML.load(File.read STATS_FILE) if File.file?(STATS_FILE)
+    read_stats_file
     set_status("Loading words...")
     (1..2).each do |word_level|
       infile = File.join(File.dirname(__FILE__), 'data', "level#{word_level}.txt")
@@ -132,7 +131,24 @@ class MainWindow < Gosu::Window
     unless File.directory?(File.dirname(STATS_FILE))
       FileUtils.mkdir_p(File.dirname(STATS_FILE))
     end
-    File.open(STATS_FILE, 'w'){|f| f.write(@mistakes.to_yaml)}
+    File.open(STATS_FILE, 'w') do |f|
+      f.write "---\n" # YAML header
+      @mistakes.keys.sort.each do |mistake|
+        f.write "#{mistake}: #{@mistakes[mistake]}\n"
+      end
+    end
+  end
+
+  def read_stats_file
+    if File.file?(STATS_FILE)
+      File.open(STATS_FILE, 'r') do |f|
+        f.each_line do |line|
+          if matches = line.match(/\A(\S+)\s*:\s*(\d+)/)
+            @mistakes[matches[1]] = Integer(matches[2])
+          end
+        end
+      end
+    end
   end
 
   # draws text centered on the screen with the top at y_origin
