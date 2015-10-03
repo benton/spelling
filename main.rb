@@ -9,7 +9,7 @@ class MainWindow < Gosu::Window
 
   # Each incorrect guess makes the word ERROR_WEIGHT times more likely
   ERROR_WEIGHT      = 8
-  STATS_FILE        = "#{ENV['HOME']}/.spelling/stats.yml"
+  STATS_FILE        = "#{ENV['HOME']}/.spelling/incorect.yml"
   RED, GREEN, WHITE = 0xff_ff0000, 0xff_00ff00, 0xff_ffffff
 
   def initialize
