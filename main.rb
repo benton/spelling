@@ -34,6 +34,8 @@ class MainWindow < Gosu::Window
             @status = "Correct!"
           else
             @status = "Incorrect. You guessed: #{@current_guess}"
+            @words_loaded = false # disable next word for 5 seconds
+            Thread.new {sleep 5 ; @words_loaded = true}
           end
         else
           Thread.new {next_word}
