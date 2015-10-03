@@ -8,7 +8,7 @@ require File.join(File.dirname(__FILE__), 'spelling_word')
 class MainWindow < Gosu::Window
 
   # Each incorrect guess makes the word ERROR_WEIGHT times more likely
-  ERROR_WEIGHT      = 8
+  ERROR_WEIGHT      = 4
   STATS_FILE        = "#{ENV['HOME']}/.spelling/incorect.yml"
   RED, GREEN, WHITE = 0xff_ff0000, 0xff_00ff00, 0xff_ffffff
 
@@ -120,7 +120,7 @@ class MainWindow < Gosu::Window
     @weighted_words = Array.new
     @words.each do |this_word|
       answer, weight = this_word.answer, 1 # the default weight for words is 1
-      weight = (@mistakes[answer] * ERROR_WEIGHT) if @mistakes[answer]
+      weight = (@mistakes[answer] ** ERROR_WEIGHT) if @mistakes[answer]
       weight.times {@weighted_words << this_word}
     end
     # now just return a random selection from the weighted Array
