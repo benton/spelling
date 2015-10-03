@@ -1,21 +1,29 @@
 #!/usr/bin/env ruby
 # Runs a GUI application for testing spelling words
+require 'fileutils'
+require 'yaml'
 require 'gosu'
 require File.join(File.dirname(__FILE__), 'spelling_word')
 
 # used to hold and model all game state, so it can be displayed in-window
 class MainWindow < Gosu::Window
 
+  # Each incorrect guess makes the word ERROR_WEIGHT times more likely
+  ERROR_WEIGHT      = 8
+  STATS_FILE        = "#{ENV['HOME']}/.spelling/stats.yml"
   RED, GREEN, WHITE = 0xff_ff0000, 0xff_00ff00, 0xff_ffffff
 
   def initialize
     @window_width, @window_height = 1024, 768
     @fonts = Hash.new
-    super(@window_width, @window_height, true)
+    super(@window_width, @window_height, false)
     self.caption  = 'Dixie Spelling Bee Trainer 2015'
     starting_word = SpellingWord.new(answer: self.caption)
     @words, @current_word, @word_hidden = Array.new, starting_word, false
     @current_guess = ''
+    # @mistakes is a Hash mapping words that were spellied incorrectly to
+    # the number of times each was spelled incorrectly
+    @mistakes = Hash.new
     Thread.new {load_words} # spawns a thread
   end
 
@@ -32,11 +40,19 @@ class MainWindow < Gosu::Window
           @word_hidden = false
           if @current_word.answer == @current_guess
             @status = "Correct!"
+            if (@mistakes[@current_word.answer] || 0) > 2
+              @mistakes[@current_word.answer] -= 1
+            else
+              @mistakes.delete(@current_word.answer)
+            end
           else
             @status = "Incorrect. You guessed: #{@current_guess}"
             @words_loaded = false # disable next word for 5 seconds
             Thread.new {sleep 5 ; @words_loaded = true}
+            @mistakes[@current_word.answer] =
+              (@mistakes[@current_word.answer] || 0) + 1
           end
+          write_stats_file
         else
           Thread.new {next_word}
         end
@@ -54,7 +70,7 @@ class MainWindow < Gosu::Window
   def next_word
     @word_hidden = true
     @current_guess = ''
-    @current_word = @words[Random.rand(@words.size)]
+    @current_word = get_next_word
     @status = "Press ESC to repeat the level #{@current_word.level} word."+
       " Press TAB to hear it used in a sentence."
     `say "Please spell?"`
@@ -85,6 +101,7 @@ class MainWindow < Gosu::Window
 
   # spawns a thread that fills @words, then sets @words_loaded
   def load_words
+    @mistakes = YAML.load(File.read STATS_FILE) if File.file?(STATS_FILE)
     set_status("Loading words...")
     (1..2).each do |word_level|
       infile = File.join(File.dirname(__FILE__), 'data', "level#{word_level}.txt")
@@ -98,6 +115,25 @@ class MainWindow < Gosu::Window
 
   # helper methods
   private
+
+  # returns a word based on a random number, weighted by the incorrect guesses
+  def get_next_word
+    @weighted_words = Array.new
+    @words.each do |this_word|
+      answer, weight = this_word.answer, 1 # the default weight for words is 1
+      weight = (@mistakes[answer] * ERROR_WEIGHT) if @mistakes[answer]
+      weight.times {@weighted_words << this_word}
+    end
+    # now just return a random selection from the weighted Array
+    @weighted_words[Random.rand(@weighted_words.size)]
+  end
+
+  def write_stats_file
+    unless File.directory?(File.dirname(STATS_FILE))
+      FileUtils.mkdir_p(File.dirname(STATS_FILE))
+    end
+    File.open(STATS_FILE, 'w'){|f| f.write(@mistakes.to_yaml)}
+  end
 
   # draws text centered on the screen with the top at y_origin
   def center_text(text, font_size, y_origin, color = WHITE)
