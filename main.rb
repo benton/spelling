@@ -30,9 +30,9 @@ class MainWindow < Gosu::Window
   def button_down(id)
     super(id)
     if id == Gosu::Button::KbEscape
-      `say "#{@current_word.answer}"`
+      `say "#{@current_word.answer.downcase}"`
     elsif id == Gosu::Button::KbTab
-      Thread.new {`say "#{@current_word.usage}"`}
+      Thread.new {`say "#{@current_word.usage.downcase}"`}
     elsif (id == Gosu::Button::KbEnter) || (id == Gosu::Button::KbSpace) ||
       (id == Gosu::Button::KbReturn)
       if @words_loaded
@@ -75,9 +75,9 @@ class MainWindow < Gosu::Window
       " Press TAB to hear it used in a sentence."
     `say "Please spell?"`
     sleep(0.3)
-    `say "#{@current_word.answer}"`
+    `say "#{@current_word.answer.downcase}"`
     sleep(0.3)
-    Thread.new {`say "#{@current_word.definition}"`}
+    Thread.new {`say "#{@current_word.definition.downcase}"`}
   end
 
   def draw
